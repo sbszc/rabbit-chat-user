@@ -1,0 +1,10 @@
+server.port: ${PORT:9000}
+
+spring.rabbitmq:
+  addresses: ${RABBITMQ_ADDRESSES:localhost:5672}
+
+amqp-config:
+  direct-chat-exchange-name: ${DIRECT_CHAT_EXCHANGE_NAME:direct-chat}
+  group-chat-exchange-name: ${GROUP_CHAT_EXCHANGE_NAME:group-chat}
+  user: ${USER:default-user}
+  groups: ${GROUPS:}

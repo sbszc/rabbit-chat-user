@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  rabbitmq-a:
+    image: rabbitmq:3.11.8-management-alpine
+    container_name: rabbitmq-a
+    hostname: rabbitmq-a #used in database name and referenced by other services
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest #default is guest
+      - RABBITMQ_DEFAULT_PASS=guest #default is guest
+    volumes:
+      - ~/.docker-conf/rabbit-chat-user:/var/lib/rabbitmq #database: /var/lib/rabbitmq/mnesia/rabbit@rabbitmq-a
+
+  rabbitmq-b:
+    image: rabbitmq:3.11.8-management-alpine
+    container_name: rabbitmq-b
+    hostname: rabbitmq-b #used in database name and referenced by other services
+    ports:
+      - "15673:15672"
+      - "5673:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest #default is guest
+      - RABBITMQ_DEFAULT_PASS=guest #default is guest
+    volumes:
+      - ~/.docker-conf/rabbit-chat-user:/var/lib/rabbitmq #database: /var/lib/rabbitmq/mnesia/rabbit@rabbitmq-b
+
+  user-1:
+    build:
+      context: .
+      args:
+        - PORT=9000
+        - RABBITMQ_ADDRESSES=rabbitmq-a:5672,rabbitmq-b:5672
+        - DIRECT_CHAT_EXCHANGE_NAME=direct-chat
+        - GROUP_CHAT_EXCHANGE_NAME=group-chat
+        - USER=user-1
+        - GROUPS=sports,work
+    container_name: rabbit-chat-user-1
+    ports:
+      - "9001:9000"
+    depends_on:
+      - rabbitmq-a
+      - rabbitmq-b
+
+  user-2:
+    build:
+      context: .
+      args:
+        - PORT=9000
+        - RABBITMQ_ADDRESSES=rabbitmq-a:5672,rabbitmq-b:5672
+        - DIRECT_CHAT_EXCHANGE_NAME=direct-chat
+        - GROUP_CHAT_EXCHANGE_NAME=group-chat
+        - USER=user-2
+        - GROUPS=sports
+    container_name: rabbit-chat-user-2
+    ports:
+      - "9002:9000"
+    depends_on:
+      - rabbitmq-a
+      - rabbitmq-b
