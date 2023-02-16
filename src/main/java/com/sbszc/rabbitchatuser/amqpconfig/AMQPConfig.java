@@ -1,4 +1,4 @@
-package com.sbszc.rabbitchat.amqpconfig;
+package com.sbszc.rabbitchatuser.amqpconfig;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -40,11 +41,26 @@ public class AMQPConfig {
     }
 
     @Bean
-    public Binding userDirectBinding(Queue userQueue, DirectChatExchange directChatExchange) {
-        return BindingBuilder
-                .bind(userQueue)
-                .to(directChatExchange)
-                .with(user);
+    public Declarables bindings(Queue userQueue, DirectChatExchange directChatExchange, GroupChatExchange groupChatExchange) {
+        var bindings = new ArrayList<Binding>();
+
+        bindings.add(
+                BindingBuilder
+                        .bind(userQueue)
+                        .to(directChatExchange)
+                        .with(user)
+        );
+
+        groups.forEach(group -> {
+            bindings.add(
+                    BindingBuilder
+                            .bind(userQueue)
+                            .to(groupChatExchange)
+                            .with(group)
+            );
+        });
+
+        return new Declarables(bindings);
     }
 
     @Bean

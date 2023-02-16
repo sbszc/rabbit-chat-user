@@ -1,61 +1,95 @@
 version: "3.8"
 services:
-  rabbitmq-a:
-    image: rabbitmq:3.11.8-management-alpine
-    container_name: rabbitmq-a
-    hostname: rabbitmq-a #used in database name and referenced by other services
+  node1:
+    build:
+      context: ./.rabbit-conf/node1/.
+    container_name: node1
+    hostname: node1 #used in database name and referenced by clients
     ports:
       - "15672:15672"
-      - "5672:5672"
     environment:
-      - RABBITMQ_DEFAULT_USER=guest #default is guest
-      - RABBITMQ_DEFAULT_PASS=guest #default is guest
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     volumes:
-      - ~/.docker-conf/rabbit-chat-user:/var/lib/rabbitmq #database: /var/lib/rabbitmq/mnesia/rabbit@rabbitmq-a
+      - ./.rabbit-conf/rabbit-chat-user:/var/lib/rabbitmq #database: /var/lib/rabbitmq/mnesia/rabbit@node1
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping # Command to check health.
+      interval: 30s # Interval between health checks.
+      timeout: 30s # Timeout for each health checking.
+      retries: 3 # How many times retries.
+    networks:
+      net:
+        ipv4_address: 10.5.0.2
 
-  rabbitmq-b:
-    image: rabbitmq:3.11.8-management-alpine
-    container_name: rabbitmq-b
-    hostname: rabbitmq-b #used in database name and referenced by other services
+  node2:
+    build:
+      context: ./.rabbit-conf/node2/.
+    container_name: node2
+    hostname: node2 #used in database name and referenced by clients
     ports:
       - "15673:15672"
-      - "5673:5672"
     environment:
-      - RABBITMQ_DEFAULT_USER=guest #default is guest
-      - RABBITMQ_DEFAULT_PASS=guest #default is guest
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     volumes:
-      - ~/.docker-conf/rabbit-chat-user:/var/lib/rabbitmq #database: /var/lib/rabbitmq/mnesia/rabbit@rabbitmq-b
+      - ./.rabbit-conf/rabbit-chat-user:/var/lib/rabbitmq #database: /var/lib/rabbitmq/mnesia/rabbit@node2
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping # Command to check health.
+      interval: 30s # Interval between health checks.
+      timeout: 30s # Timeout for each health checking.
+      retries: 3 # How many times retries.
+    networks:
+      net:
+        ipv4_address: 10.5.0.3
 
-  user-1:
+  user1:
     build:
       context: .
-      args:
-        - PORT=9000
-        - RABBITMQ_ADDRESSES=rabbitmq-a:5672,rabbitmq-b:5672
-        - DIRECT_CHAT_EXCHANGE_NAME=direct-chat
-        - GROUP_CHAT_EXCHANGE_NAME=group-chat
-        - USER=user-1
-        - GROUPS=sports,work
-    container_name: rabbit-chat-user-1
+    container_name: user1
     ports:
       - "9001:9000"
+    environment:
+      - PORT=9000
+      - RABBITMQ_ADDRESSES=node1:5672,node2:5672
+      - DIRECT_CHAT_EXCHANGE_NAME=direct-chat
+      - GROUP_CHAT_EXCHANGE_NAME=group-chat
+      - USER=user1
+      - GROUPS=sports,work
     depends_on:
-      - rabbitmq-a
-      - rabbitmq-b
+      node1:
+        condition: service_healthy
+      node2:
+        condition: service_healthy
+    networks:
+      net:
+        ipv4_address: 10.5.0.4
 
-  user-2:
+  user2:
     build:
       context: .
-      args:
-        - PORT=9000
-        - RABBITMQ_ADDRESSES=rabbitmq-a:5672,rabbitmq-b:5672
-        - DIRECT_CHAT_EXCHANGE_NAME=direct-chat
-        - GROUP_CHAT_EXCHANGE_NAME=group-chat
-        - USER=user-2
-        - GROUPS=sports
-    container_name: rabbit-chat-user-2
+    container_name: user2
     ports:
       - "9002:9000"
+    environment:
+      - PORT=9000
+      - RABBITMQ_ADDRESSES=node1:5672,node2:5672
+      - DIRECT_CHAT_EXCHANGE_NAME=direct-chat
+      - GROUP_CHAT_EXCHANGE_NAME=group-chat
+      - USER=user2
+      - GROUPS=sports
     depends_on:
-      - rabbitmq-a
-      - rabbitmq-b
+      node1:
+        condition: service_healthy
+      node2:
+        condition: service_healthy
+    networks:
+      net:
+        ipv4_address: 10.5.0.5
+
+networks:
+  net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1

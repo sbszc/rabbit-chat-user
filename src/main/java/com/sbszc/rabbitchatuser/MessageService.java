@@ -1,6 +1,6 @@
-package com.sbszc.rabbitchat;
+package com.sbszc.rabbitchatuser;
 
-import com.sbszc.rabbitchat.amqpconfig.AMQPConfig;
+import com.sbszc.rabbitchatuser.amqpconfig.AMQPConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 

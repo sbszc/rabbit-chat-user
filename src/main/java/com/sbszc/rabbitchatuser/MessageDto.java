@@ -1,4 +1,4 @@
-package com.sbszc.rabbitchat;
+package com.sbszc.rabbitchatuser;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

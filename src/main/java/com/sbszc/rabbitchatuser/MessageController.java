@@ -1,4 +1,4 @@
-package com.sbszc.rabbitchat;
+package com.sbszc.rabbitchatuser;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
